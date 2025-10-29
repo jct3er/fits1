@@ -12,7 +12,7 @@ def fit1(entries=1000, save=False):
 
     #simple fits may be performed automatically
     r.gStyle.SetOptFit(1111) # show reduced chi2, probability, and params
-    randomHist1.Fit("gaus", "L")
+    randomHist1.Fit("gaus")
     randomHist1.DrawCopy("e")  # "e" shows bin errors
     # Using DrawCopy vs Draw allows us to delete the original histogram
     # without removing it from the display.  If we save the histogran to a
@@ -38,8 +38,57 @@ def fit1(entries=1000, save=False):
     return randomHist1
 # **************************************
 
+
+def fit1b(entries=1000, experiments=1000):
+    randomHist1 = r.TH1F("randomHist1", "Random Histogram;x;frequency", 100, 0, 100)
+    randomHist1.Sumw2()
+    generator=r.TRandom2(0)  # parameter == seed, 0->use clock
+
+    chi_hist = r.TH1F("Param", "Mean Chi2;x;frequency", 100, 45, 55)
+    nll_hist = r.TH1F("Err", "Mean NLL;x;frequency", 100, 45, 55)
+    
+    for trial in range(experiments):
+        randomHist1.Reset()
+        for i in range(entries):
+            randomHist1.Fill(generator.Gaus(50,10)) # params: mean, sigma
+
+    #simple fits may be performed automatically
+        #r.gStyle.SetOptFit(1111) # show reduced chi2, probability, and params
+        gaus_chi=r.TF1("gaus_chi","[0]*exp(-(x-[1])*(x-[1])/[2]/[2])",0,100)
+        gaus_chi.SetParameter(0,randomHist1.GetMaximum())
+        gaus_chi.SetParameter(1,randomHist1.GetMean()) 
+        gaus_chi.SetParameter(2,randomHist1.GetStdDev()) 
+        randomHist1.Fit("gaus_chi", "Q N")
+
+        gaus_ll=r.TF1("gaus_ll","[0]*exp(-(x-[1])*(x-[1])/[2]/[2])",0,100)
+        gaus_ll.SetParameter(0,randomHist1.GetMaximum())
+        gaus_ll.SetParameter(1,randomHist1.GetMean()) 
+        gaus_ll.SetParameter(2,randomHist1.GetStdDev()) 
+        randomHist1.Fit("gaus_ll", "Q N L")
+
+        chi = gaus_chi.GetParameter(1)
+        ll = gaus_ll.GetParameter(1)
+        
+
+        
+
+        chi_hist.Fill(chi)
+        nll_hist.Fill(ll)
+        
+
+    tc = r.TCanvas("canvas", "Chi2 Graphs", 800, 600)
+    tc.Divide(2,1)
+    tc.cd(1)
+    chi_hist.Draw()
+    tc.cd(2)
+    nll_hist.Draw()
+    tc.Update()
+    tc.SaveAs("result2.pdf")
+
+
 if __name__ == "__main__":
-    fit1(10)
+    #fit1()
+    fit1b()
     input("hit Enter to exit")
 
 
