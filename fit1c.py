@@ -81,7 +81,7 @@ for i in range(1, nll_hist.GetNbinsX()+1):
 print(f"The P value is {count/1000:.3f}")
 
 
-means = np.linspace(-4.25,4.25)+mean
+means = np.linspace(-4.5,4.5)+mean
 nlls = []
 gaus_cont=r.TF1("gaus_cont","[0]*exp(-(x-[1])*(x-[1])/[2]/[2])",0,100)
 gaus_cont.SetParameter(0, amplitude)
@@ -90,16 +90,9 @@ for i in means:
     gaus_cont.SetParameter(1, i)
     nlls.append(NegLogLik(h25, gaus_cont))
 
-print(f"The Error in the Mean for NLL is {gaus.GetParError(1):.3f}")
+ll_err = gaus.GetParError(1)
 
-fig = plt.figure()
-plt.plot(means, nlls)
-plt.xlabel("Mean Values")
-plt.ylabel("NLL Values")
-plt.grid()
-plt.show()
-
-
+print(f"The Error in the Mean for NLL is {ll_err:.3f}")
 
 
 file1k = r.TFile("histo1k.root")
@@ -111,7 +104,9 @@ gaus_chi.SetParameter(1,h1k.GetMean())
 gaus_chi.SetParameter(2,h1k.GetStdDev()) 
 h1k.Fit("gaus_chi", "Q N")
 
-means_chi = np.linspace(-.4,.4)+gaus_chi.GetParameter(1)
+chi_mean = gaus_chi.GetParameter(1)
+
+means_chi = np.linspace(-.4,.4)+chi_mean
 chis = []
 
 gaus_cont.SetParameter(0, gaus_chi.GetParameter(0))
@@ -120,15 +115,31 @@ for i in means_chi:
     gaus_cont.SetParameter(1, i)
     chis.append(Chi2(h1k, gaus_cont))
 
-print(f"The Error in the Mean for Chi2 is {gaus_chi.GetParError(1):.3f}")
+chi_err = gaus_chi.GetParError(1)
+
+print(f"The Error in the Mean for Chi2 is {chi_err:.3f}")
 
 
-fig = plt.figure()
-plt.plot(means_chi, chis)
-plt.xlabel("Mean Values")
-plt.ylabel("Chi Values")
-plt.grid()
-plt.show()    
+fig, ax = plt.subplots(1, 2, figsize=[9,7])
+ax[0].axvline(x=chi_mean+chi_err, color="red", label="1 Sigma")
+ax[0].axvline(x=chi_mean-chi_err, color="red")
+ax[0].axhline(y=gaus_chi.GetChisquare()+1, color="purple", label="Min+1")
+ax[0].plot(means_chi, chis, label="Contour")
+ax[0].set_xlabel("Mean Values")
+ax[0].set_ylabel("Chi Values")
+ax[0].legend()
+ax[0].grid()
+
+ax[1].axvline(x=mean+2*ll_err, color="red", label="2 Sigma")
+ax[1].axvline(x=mean-2*ll_err, color="red")
+ax[1].axhline(y=nll_real+4, color="purple", label="Min+4")
+ax[1].plot(means, nlls, label="Contour")
+ax[1].set_xlabel("Mean Values")
+ax[1].set_ylabel("NLL Values")
+ax[1].legend()
+ax[1].grid()
+
+plt.savefig("result4.pdf")  
 
 
     
