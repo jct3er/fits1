@@ -12,7 +12,17 @@ def NegLogLik(hist, fit_func):
         yi = hist.GetBinContent(i)
         count += yi*np.log(lamda)-lamda-r.TMath.LnGamma(yi+1)
     return -2*count
-        
+
+
+def Chi2(hist, fit_func):
+    count = 0
+    for i in range(1, hist.GetNbinsX()+1):
+        xi = hist.GetBinCenter(i)
+        yhist = hist.GetBinContent(i)
+        yfunc = fit_func.Eval(xi)
+        if not (yhist == 0):
+            count += (yhist-yfunc)**2/yhist
+    return count
 
 file25 = r.TFile("histo25.root")
 h25 = file25.Get("randomHist1")
@@ -80,6 +90,8 @@ for i in means:
     gaus_cont.SetParameter(1, i)
     nlls.append(NegLogLik(h25, gaus_cont))
 
+print(f"The Error in the Mean for NLL is {gaus.GetParError(1):.3f}")
+
 fig = plt.figure()
 plt.plot(means, nlls)
 plt.xlabel("Mean Values")
@@ -88,6 +100,35 @@ plt.grid()
 plt.show()
 
 
+
+
+file1k = r.TFile("histo1k.root")
+h1k = file1k.Get("randomHist1")
+
+gaus_chi=r.TF1("gaus_chi","[0]*exp(-(x-[1])*(x-[1])/[2]/[2])",0,100)
+gaus_chi.SetParameter(0,h1k.GetMaximum())
+gaus_chi.SetParameter(1,h1k.GetMean()) 
+gaus_chi.SetParameter(2,h1k.GetStdDev()) 
+h1k.Fit("gaus_chi", "Q N")
+
+means_chi = np.linspace(-.4,.4)+gaus_chi.GetParameter(1)
+chis = []
+
+gaus_cont.SetParameter(0, gaus_chi.GetParameter(0))
+gaus_cont.SetParameter(2, gaus_chi.GetParameter(2))
+for i in means_chi:
+    gaus_cont.SetParameter(1, i)
+    chis.append(Chi2(h1k, gaus_cont))
+
+print(f"The Error in the Mean for Chi2 is {gaus_chi.GetParError(1):.3f}")
+
+
+fig = plt.figure()
+plt.plot(means_chi, chis)
+plt.xlabel("Mean Values")
+plt.ylabel("Chi Values")
+plt.grid()
+plt.show()    
 
 
     
