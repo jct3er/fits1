@@ -18,3 +18,14 @@ You are welcome to modify the provided code for your projects and to use other p
 * TH1hist2Numpy.ipynb : an example for converting a ROOT histogram to numpy arrays
 
 Note that from ROOT you can type ```new TBrowser()``` or in Python r.TBrowser() to get a graphical browser that allows you to look at what's contained in the TFiles.
+
+
+
+Problem 3.
+The p-value for my NLL fit is 0.751
+
+Problem 4.
+The error of the mean for the NLL is 2.088.
+The error of the mean for the Chi2 is 0.322. 
+
+Both of these errors are really close what I got from the calculated values from varying the mean. (Lines on result4.pdf. Red line is from the error in the fit. Purple line is the minimum of the objective function plus 1 for chi and 4 for NLL.)
